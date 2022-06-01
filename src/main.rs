@@ -87,6 +87,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctrlc::set_handler(move || running_clone.store(false, atomic::Ordering::Relaxed))
         .expect("failed to set ctrl-c trap");
     info!("start fetching state every {:?}", LOOP_WAIT_TIME);
+    let mut is_low_notified = false;
     loop {
         thread::sleep(LOOP_WAIT_TIME);
         if !running.load(atomic::Ordering::Relaxed) {
@@ -102,9 +103,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                     debug!("new battery state {:?}", new_state.state);
                 }
                 if new_state.charge <= CRITICAL_CHARGE {
-                    get_battery_low_notif(new_state.charge).show()?;
-                    debug!("charge is lower then 15% - {}", new_state.charge);
+                    if !is_low_notified {
+                        get_battery_low_notif(new_state.charge).show()?;
+                        is_low_notified = true;
+                        debug!("charge is lower then 15% - {}", new_state.charge);
+                    }
+                } else {
+                    is_low_notified = false;
                 }
+
                 state = new_state;
             }
             Err(e) => error!("{:?}", e),
