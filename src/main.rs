@@ -64,7 +64,9 @@ fn get_battery_state_changed_notif(
         .timeout(NOTIFICATION_TIMEOUT)
         .finalize();
     if let Some(ttc) = time_to_charge {
-        return n.body(&format!("{:?}", ttc)).finalize();
+        let duration =
+            time::Duration::from_nanos(ttc.get::<battery::units::time::nanosecond>() as u64);
+        return n.body(&format!("{:?}", duration)).finalize();
     }
 
     n
@@ -80,6 +82,8 @@ fn get_battery_low_notif(val: f32) -> Notification {
 
 fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
+    let t = time::Duration::from_secs(1);
+    println!("{:?}", t);
     let mut state = get_battery_state()?;
     debug!("got initial battery state");
     let running = Arc::new(atomic::AtomicBool::new(true));
