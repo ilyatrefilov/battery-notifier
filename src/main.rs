@@ -66,7 +66,9 @@ fn get_battery_state_changed_notif(
     if let Some(ttc) = time_to_charge {
         let duration =
             time::Duration::from_nanos(ttc.get::<battery::units::time::nanosecond>() as u64);
-        return n.body(&format!("{:?}", duration)).finalize();
+        return n
+            .body(&format!("{}m", (duration.as_secs() / 60) % 60))
+            .finalize();
     }
 
     n
@@ -77,7 +79,7 @@ fn get_battery_low_notif(val: f32) -> Notification {
         .summary("Battery charge is critically low")
         .body(&format!("charge - {}%", val * 100_f32))
         .timeout(NOTIFICATION_TIMEOUT)
-        .to_owned()
+        .finalize()
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
